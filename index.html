@@ -74,8 +74,9 @@
     
     <!-- Firebase JS SDK'ları -->
     <script type="module">
+        // Gerekli Firebase modüllerini içe aktarma
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Firebase Yapılandırması - Kendi proje ayarlarını buraya yapıştır
@@ -150,6 +151,7 @@
             }
 
             try {
+                // Verileri 'users' koleksiyonuna ekleme
                 const usersCollectionRef = collection(db, `/artifacts/${appId}/public/data/users`);
                 
                 await addDoc(usersCollectionRef, {
@@ -165,26 +167,6 @@
             } catch (e) {
                 console.error("Belge eklenirken bir hata oluştu: ", e);
                 showMessage("Veri kaydedilirken bir hata oluştu.", 'error');
-            }
-        });
-
-        // Veri silme işlevi
-        document.getElementById('usersList').addEventListener('click', async (e) => {
-            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('delete-button')) {
-                const docId = e.target.closest('.user-item').dataset.id;
-                if (!docId) {
-                    showMessage("Silinecek belge kimliği bulunamadı.", 'error');
-                    return;
-                }
-
-                try {
-                    const docRef = doc(db, `/artifacts/${appId}/public/data/users`, docId);
-                    await deleteDoc(docRef);
-                    showMessage("Kullanıcı başarıyla silindi!");
-                } catch (e) {
-                    console.error("Belge silinirken bir hata oluştu: ", e);
-                    showMessage("Veri silinirken bir hata oluştu.", 'error');
-                }
             }
         });
 
@@ -204,18 +186,10 @@
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     const userDiv = document.createElement('div');
-                    userDiv.className = 'user-item flex justify-between items-center bg-white p-4 rounded-md shadow-sm mb-2 last:mb-0';
-                    userDiv.dataset.id = doc.id; // Belge ID'sini kaydet
+                    userDiv.className = 'bg-white p-4 rounded-md shadow-sm mb-2 last:mb-0';
                     userDiv.innerHTML = `
-                        <div>
-                            <p class="text-sm font-semibold text-indigo-600">${data.name}</p>
-                            <p class="text-xs text-gray-500 truncate">${data.email}</p>
-                        </div>
-                        <button class="delete-button p-2 text-red-500 hover:text-red-700 transition duration-150 ease-in-out rounded-full">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                            </svg>
-                        </button>
+                        <p class="text-sm font-semibold text-indigo-600">${data.name}</p>
+                        <p class="text-xs text-gray-500 truncate">${data.email}</p>
                     `;
                     usersListElement.appendChild(userDiv);
                 });
@@ -227,7 +201,6 @@
 
         // Uygulama yüklendiğinde kimlik doğrulamasını başlat
         window.onload = authenticate;
-
     </script>
 </body>
 </html>

@@ -1,89 +1,206 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
-
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/12.1.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/12.1.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.1.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/12.1.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.1.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.1.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/12.1.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.1.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.1.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.1.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
-
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
-    </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
-
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Firestore Kayıt Uygulaması</title>
+    <!-- Tailwind CSS CDN'i -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter yazı tipi -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
         }
-      });
+        /* Özel mesaj kutusu için stil */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .message-box.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Ana Konteyner -->
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <!-- Mesaj Kutusu -->
+        <div id="message-box" class="message-box bg-green-500 text-white"></div>
+
+        <!-- Ana Başlık -->
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-xl">
+            <h1 class="text-3xl font-bold text-center text-indigo-600 mb-6">Firestore Kullanıcı Kaydı</h1>
+            <p class="text-center text-gray-600 mb-8">Kullanıcı bilgilerini gir ve Firestore'a kaydet.</p>
+            
+            <!-- Veri Giriş Formu -->
+            <div class="space-y-4">
+                <div>
+                    <label for="userName" class="block text-sm font-medium text-gray-700">Ad Soyad</label>
+                    <input type="text" id="userName" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" placeholder="Örn: Bana Faruk Desinler">
+                </div>
+                <div>
+                    <label for="userEmail" class="block text-sm font-medium text-gray-700">E-posta</label>
+                    <input type="email" id="userEmail" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" placeholder="Örn: ornek@mail.com">
+                </div>
+                <button id="saveButton" class="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Veriyi Kaydet
+                </button>
+            </div>
+            
+            <!-- Kullanıcı Listesi Alanı -->
+            <div class="mt-10">
+                <h2 class="text-xl font-bold text-gray-700 mb-4">Kayıtlı Kullanıcılar</h2>
+                <div id="usersList" class="bg-gray-50 p-4 rounded-md shadow-inner h-64 overflow-y-auto">
+                    <p class="text-center text-gray-500 italic">Yükleniyor...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase JS SDK'ları -->
+    <script type="module">
+        // Gerekli Firebase modüllerini içe aktarma
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Firebase Yapılandırması - Kendi proje ayarlarını buraya yapıştır
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        // Uygulama ve Servisleri Başlatma
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Mesaj kutusunu göstermek için yardımcı fonksiyon
+        function showMessage(message, type = 'success') {
+            const msgBox = document.getElementById('message-box');
+            msgBox.textContent = message;
+            if (type === 'success') {
+                msgBox.classList.remove('bg-red-500');
+                msgBox.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                msgBox.classList.remove('bg-green-500');
+                msgBox.classList.add('bg-red-500');
+            }
+            msgBox.classList.add('show');
+            setTimeout(() => {
+                msgBox.classList.remove('show');
+            }, 3000);
+        }
+
+        // Kullanıcı kimlik doğrulaması
+        async function authenticate() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                console.log("Kullanıcı kimlik doğrulama başarılı.");
+            } catch (error) {
+                console.error("Kimlik doğrulama hatası:", error);
+                showMessage('Kimlik doğrulama sırasında bir hata oluştu.', 'error');
+            }
+        }
+
+        let isAuthReady = false;
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                isAuthReady = true;
+                console.log("Kullanıcı giriş yaptı:", user.uid);
+                // Auth başarılı olduktan sonra Firestore dinleyicisini başlat
+                if (isAuthReady) {
+                    setupFirestoreListener();
+                }
+            } else {
+                isAuthReady = false;
+                console.log("Kullanıcı çıkış yaptı veya anonim.");
+            }
+        });
+
+        // Veritabanına veri ekleme
+        document.getElementById('saveButton').addEventListener('click', async () => {
+            if (!isAuthReady) {
+                showMessage("Lütfen kimlik doğrulamanın tamamlanmasını bekleyin.", 'error');
+                return;
+            }
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const userId = auth.currentUser?.uid || 'anonim_kullanici';
+
+            if (name === "" || email === "") {
+                showMessage("Lütfen tüm alanları doldurun.", 'error');
+                return;
+            }
+
+            try {
+                // Verileri 'users' koleksiyonuna ekleme
+                const usersCollectionRef = collection(db, `/artifacts/${appId}/public/data/users`);
+                
+                await addDoc(usersCollectionRef, {
+                    name: name,
+                    email: email,
+                    createdAt: new Date(),
+                    userId: userId
+                });
+                
+                showMessage("Kullanıcı başarıyla kaydedildi!");
+                document.getElementById('userName').value = '';
+                document.getElementById('userEmail').value = '';
+            } catch (e) {
+                console.error("Belge eklenirken bir hata oluştu: ", e);
+                showMessage("Veri kaydedilirken bir hata oluştu.", 'error');
+            }
+        });
+
+        // Veritabanındaki verileri canlı olarak dinleme ve listeleme
+        function setupFirestoreListener() {
+            const usersListElement = document.getElementById('usersList');
+            const usersCollectionRef = collection(db, `/artifacts/${appId}/public/data/users`);
+            
+            // onSnapshot ile koleksiyondaki değişiklikleri dinle
+            onSnapshot(usersCollectionRef, (snapshot) => {
+                usersListElement.innerHTML = ''; // Listeyi temizle
+                if (snapshot.empty) {
+                    usersListElement.innerHTML = `<p class="text-center text-gray-500 italic">Henüz hiçbir kullanıcı eklenmedi.</p>`;
+                    return;
+                }
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const userDiv = document.createElement('div');
+                    userDiv.className = 'bg-white p-4 rounded-md shadow-sm mb-2 last:mb-0';
+                    userDiv.innerHTML = `
+                        <p class="text-sm font-semibold text-indigo-600">${data.name}</p>
+                        <p class="text-xs text-gray-500 truncate">${data.email}</p>
+                    `;
+                    usersListElement.appendChild(userDiv);
+                });
+            }, (error) => {
+                console.error("Veri dinlenirken hata oluştu:", error);
+                usersListElement.innerHTML = `<p class="text-center text-red-500 italic">Veri yüklenemedi. Lütfen konsolu kontrol edin.</p>`;
+            });
+        }
+
+        // Uygulama yüklendiğinde kimlik doğrulamasını başlat
+        window.onload = authenticate;
     </script>
-  </body>
+</body>
 </html>
