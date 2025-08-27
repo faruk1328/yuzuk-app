@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Firestore Kayıt Uygulaması</title>
+    <!-- Tailwind CSS CDN'i -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter yazı tipi -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Özel mesaj kutusu için stil */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .message-box.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Ana Konteyner -->
+    <div class="min-h-screen flex flex-col items-center justify-center p-4">
+        
+        <!-- Mesaj Kutusu -->
+        <div id="message-box" class="message-box bg-green-500 text-white"></div>
+
+        <!-- Ana Başlık -->
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-xl">
+            <h1 class="text-3xl font-bold text-center text-indigo-600 mb-6">Firestore Kullanıcı Kaydı</h1>
+            <p class="text-center text-gray-600 mb-8">Kullanıcı bilgilerini gir ve Firestore'a kaydet.</p>
+            
+            <!-- Veri Giriş Formu -->
+            <div class="space-y-4">
+                <div>
+                    <label for="userName" class="block text-sm font-medium text-gray-700">Ad Soyad</label>
+                    <input type="text" id="userName" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" placeholder="Örn: Bana Faruk Desinler">
+                </div>
+                <div>
+                    <label for="userEmail" class="block text-sm font-medium text-gray-700">E-posta</label>
+                    <input type="email" id="userEmail" class="mt-1 block w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out" placeholder="Örn: ornek@mail.com">
+                </div>
+                <button id="saveButton" class="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    Veriyi Kaydet
+                </button>
+            </div>
+            
+            <!-- Kullanıcı Listesi Alanı -->
+            <div class="mt-10">
+                <h2 class="text-xl font-bold text-gray-700 mb-4">Kayıtlı Kullanıcılar</h2>
+                <div id="usersList" class="bg-gray-50 p-4 rounded-md shadow-inner h-64 overflow-y-auto">
+                    <p class="text-center text-gray-500 italic">Yükleniyor...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase JS SDK'ları -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Firebase Yapılandırması - Kendi proje ayarlarını buraya yapıştır
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        // Uygulama ve Servisleri Başlatma
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Mesaj kutusunu göstermek için yardımcı fonksiyon
+        function showMessage(message, type = 'success') {
+            const msgBox = document.getElementById('message-box');
+            msgBox.textContent = message;
+            if (type === 'success') {
+                msgBox.classList.remove('bg-red-500');
+                msgBox.classList.add('bg-green-500');
+            } else if (type === 'error') {
+                msgBox.classList.remove('bg-green-500');
+                msgBox.classList.add('bg-red-500');
+            }
+            msgBox.classList.add('show');
+            setTimeout(() => {
+                msgBox.classList.remove('show');
+            }, 3000);
+        }
+
+        // Kullanıcı kimlik doğrulaması
+        async function authenticate() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                console.log("Kullanıcı kimlik doğrulama başarılı.");
+            } catch (error) {
+                console.error("Kimlik doğrulama hatası:", error);
+                showMessage('Kimlik doğrulama sırasında bir hata oluştu.', 'error');
+            }
+        }
+
+        let isAuthReady = false;
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                isAuthReady = true;
+                console.log("Kullanıcı giriş yaptı:", user.uid);
+                // Auth başarılı olduktan sonra Firestore dinleyicisini başlat
+                if (isAuthReady) {
+                    setupFirestoreListener();
+                }
+            } else {
+                isAuthReady = false;
+                console.log("Kullanıcı çıkış yaptı veya anonim.");
+            }
+        });
+
+        // Veritabanına veri ekleme
+        document.getElementById('saveButton').addEventListener('click', async () => {
+            if (!isAuthReady) {
+                showMessage("Lütfen kimlik doğrulamanın tamamlanmasını bekleyin.", 'error');
+                return;
+            }
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const userId = auth.currentUser?.uid || 'anonim_kullanici';
+
+            if (name === "" || email === "") {
+                showMessage("Lütfen tüm alanları doldurun.", 'error');
+                return;
+            }
+
+            try {
+                const usersCollectionRef = collection(db, `/artifacts/${appId}/public/data/users`);
+                
+                await addDoc(usersCollectionRef, {
+                    name: name,
+                    email: email,
+                    createdAt: new Date(),
+                    userId: userId
+                });
+                
+                showMessage("Kullanıcı başarıyla kaydedildi!");
+                document.getElementById('userName').value = '';
+                document.getElementById('userEmail').value = '';
+            } catch (e) {
+                console.error("Belge eklenirken bir hata oluştu: ", e);
+                showMessage("Veri kaydedilirken bir hata oluştu.", 'error');
+            }
+        });
+
+        // Veri silme işlevi
+        document.getElementById('usersList').addEventListener('click', async (e) => {
+            if (e.target.tagName === 'BUTTON' && e.target.classList.contains('delete-button')) {
+                const docId = e.target.closest('.user-item').dataset.id;
+                if (!docId) {
+                    showMessage("Silinecek belge kimliği bulunamadı.", 'error');
+                    return;
+                }
+
+                try {
+                    const docRef = doc(db, `/artifacts/${appId}/public/data/users`, docId);
+                    await deleteDoc(docRef);
+                    showMessage("Kullanıcı başarıyla silindi!");
+                } catch (e) {
+                    console.error("Belge silinirken bir hata oluştu: ", e);
+                    showMessage("Veri silinirken bir hata oluştu.", 'error');
+                }
+            }
+        });
+
+        // Veritabanındaki verileri canlı olarak dinleme ve listeleme
+        function setupFirestoreListener() {
+            const usersListElement = document.getElementById('usersList');
+            const usersCollectionRef = collection(db, `/artifacts/${appId}/public/data/users`);
+            
+            // onSnapshot ile koleksiyondaki değişiklikleri dinle
+            onSnapshot(usersCollectionRef, (snapshot) => {
+                usersListElement.innerHTML = ''; // Listeyi temizle
+                if (snapshot.empty) {
+                    usersListElement.innerHTML = `<p class="text-center text-gray-500 italic">Henüz hiçbir kullanıcı eklenmedi.</p>`;
+                    return;
+                }
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const userDiv = document.createElement('div');
+                    userDiv.className = 'user-item flex justify-between items-center bg-white p-4 rounded-md shadow-sm mb-2 last:mb-0';
+                    userDiv.dataset.id = doc.id; // Belge ID'sini kaydet
+                    userDiv.innerHTML = `
+                        <div>
+                            <p class="text-sm font-semibold text-indigo-600">${data.name}</p>
+                            <p class="text-xs text-gray-500 truncate">${data.email}</p>
+                        </div>
+                        <button class="delete-button p-2 text-red-500 hover:text-red-700 transition duration-150 ease-in-out rounded-full">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    `;
+                    usersListElement.appendChild(userDiv);
+                });
+            }, (error) => {
+                console.error("Veri dinlenirken hata oluştu:", error);
+                usersListElement.innerHTML = `<p class="text-center text-red-500 italic">Veri yüklenemedi. Lütfen konsolu kontrol edin.</p>`;
+            });
+        }
+
+        // Uygulama yüklendiğinde kimlik doğrulamasını başlat
+        window.onload = authenticate;
+
+    </script>
+</body>
+</html>
